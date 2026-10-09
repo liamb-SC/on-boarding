@@ -1,0 +1,9 @@
+{
+  "name": "shop-dynamodb",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "try": "node try.js"
+  }
+}

@@ -1,0 +1,5 @@
+# This repo is full of bash scripts — keep LF endings on every platform so the
+# runner and challenge scripts stay executable when cloned on Windows/WSL.
+* text=auto eol=lf
+*.sh text eol=lf
+onboard text eol=lf

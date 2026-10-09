@@ -1,0 +1,3 @@
+2026-10-01T09:00:00Z INFO  server started
+2026-10-01T09:00:05Z ERROR db timeout
+2026-10-01T09:01:00Z INFO  request /health

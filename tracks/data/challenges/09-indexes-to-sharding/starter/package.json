@@ -1,0 +1,13 @@
+{
+  "name": "orders-scaling",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "explain": "node explain.js",
+    "shards": "node shards-demo.js"
+  },
+  "dependencies": {
+    "sql.js": "^1.11.0"
+  }
+}

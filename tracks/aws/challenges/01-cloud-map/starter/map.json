@@ -1,0 +1,30 @@
+{
+  "categories": {
+    "EC2": "",
+    "Lambda": "",
+    "ECS": "",
+    "S3": "",
+    "EBS": "",
+    "EFS": "",
+    "RDS": "",
+    "DynamoDB": "",
+    "VPC": "",
+    "Subnet": "",
+    "Security group": "",
+    "CloudFront": ""
+  },
+  "scenarios": {
+    "resize-on-upload": "",
+    "legacy-app-full-os": "",
+    "run-our-containers": "",
+    "user-uploads-at-scale": "",
+    "disk-for-one-server": "",
+    "shared-folder-many-servers": "",
+    "orders-with-joins": "",
+    "session-lookups-by-key": "",
+    "our-private-network": "",
+    "keep-db-off-internet": "",
+    "only-443-to-web-servers": "",
+    "fast-assets-worldwide": ""
+  }
+}

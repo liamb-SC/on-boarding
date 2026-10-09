@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Onboarding app - an assets bucket, a jobs queue, and a parameter telling the app where the queue is.
+
+Parameters:
+  Env:
+    Type: String
+    AllowedValues: [dev, prod]
+    Default: dev
+
+Resources:
+  AssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub onboard-cfn-${Env}-assets
+
+  # TODO 1: JobsQueue, an AWS::SQS::Queue named onboard-cfn-<Env>-jobs
+  #         with a VisibilityTimeout of 60 seconds.
+
+  # TODO 2: QueueUrlParam, an AWS::SSM::Parameter named /onboard/<Env>/jobs-queue-url,
+  #         Type String, whose Value is the queue's URL. Don't hard-code it:
+  #         reference the queue.
+
+Outputs:
+  BucketName:
+    Value: !Ref AssetsBucket
+
+  # TODO 3: outputs QueueUrl (the queue's URL) and QueueArn (the queue's ARN).

@@ -1,0 +1,8 @@
+{
+  "_instructions": "For each step of checkout, answer \"sync\" (the caller must wait for the result) or \"async\" (fire an event/message and move on).",
+  "check-stock-before-confirming": "",
+  "send-confirmation-email": "",
+  "authorise-card-payment": "",
+  "update-recommendations": "",
+  "generate-invoice-pdf": ""
+}

@@ -1,0 +1,345 @@
+#!/usr/bin/env bash
+# onboard — self-validating skills challenges for StepChange onboarding.
+#
+#   ./onboard list [track]          list tracks + challenges with your status
+#   ./onboard start <track>/<NN>    scaffold an isolated practice repo
+#   ./onboard validate <track>/<NN> check your work; records completion on pass
+#   ./onboard reset <track>/<NN>    start a challenge over
+#   ./onboard progress              your completion summary
+#   ./onboard share                 publish your progress to progress/<you>
+#   ./onboard team [person] [--csv] everyone's shared progress
+#   ./onboard help
+#
+# Pure bash. The only hard dependency is git. Adding a new track/challenge is
+# just a folder under tracks/<track>/challenges/ — the runner auto-discovers it.
+
+set -uo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export REPO_ROOT
+
+# shellcheck source=lib/progress.sh
+source "$REPO_ROOT/lib/progress.sh"
+
+# ----- presentation -------------------------------------------------------
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  RED=$'\033[31m'; GREEN=$'\033[32m'; YELLOW=$'\033[33m'; CYAN=$'\033[36m'
+  BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
+else
+  RED=; GREEN=; YELLOW=; CYAN=; BOLD=; DIM=; RESET=
+fi
+info() { printf '%s\n' "$*"; }
+ok()   { printf '%s✓%s %s\n' "$GREEN" "$RESET" "$*"; }
+warn() { printf '%s!%s %s\n' "$YELLOW" "$RESET" "$*"; }
+err()  { printf '%s✗%s %s\n' "$RED" "$RESET" "$*" >&2; }
+
+# ----- current user -------------------------------------------------------
+# Key progress files by git identity (falls back to $USER), slugified.
+resolve_user() {
+  local u
+  u="$(git config user.name 2>/dev/null || true)"
+  [ -z "$u" ] && u="${USER:-learner}"
+  printf '%s' "$u" | tr '[:upper:] ' '[:lower:]-' | tr -cd 'a-z0-9-'
+}
+USER_SLUG="$(resolve_user)"
+[ -z "$USER_SLUG" ] && USER_SLUG="learner"
+
+# ----- shared progress ----------------------------------------------------
+# Each person's progress lives on its own branch, progress/<user>, holding a
+# single progress.json. Nothing is merged into main.
+REMOTE="${ONBOARD_REMOTE:-origin}"
+repo_git() { git -C "$REPO_ROOT" "$@"; }
+
+need_remote() {
+  repo_git remote get-url "$REMOTE" >/dev/null 2>&1 && return 0
+  err "This repo has no '$REMOTE' remote to share progress through."
+  info "  Clone it from the team's remote, or set ONBOARD_REMOTE=<remote-name>."
+  return 1
+}
+
+# Every track (excluding the template) and its challenge count.
+track_names() {
+  local tdir
+  for tdir in "$REPO_ROOT"/tracks/*/; do
+    [ "$(basename "$tdir")" = "_TEMPLATE" ] && continue
+    [ -d "$tdir/challenges" ] && basename "$tdir"
+  done
+}
+track_total() {
+  local cdir n=0
+  for cdir in "$REPO_ROOT/tracks/$1/challenges"/*/; do [ -d "$cdir" ] && n=$((n + 1)); done
+  echo "$n"
+}
+
+# ----- challenge resolution ----------------------------------------------
+# Accepts git/06 or git/06-reflog-recovery. Sets CH_TRACK CH_SLUG CH_ID
+# CH_DIR CH_SANDBOX.
+resolve_challenge() {
+  local input="$1"
+  if [ "${input%/*}" = "$input" ]; then
+    err "Use the form <track>/<NN>, e.g. ${BOLD}git/01${RESET}"; return 1
+  fi
+  local track="${input%%/*}" sel="${input#*/}"
+  local base="$REPO_ROOT/tracks/$track/challenges"
+  if [ ! -d "$base" ]; then err "No such track: $track (see ./onboard list)"; return 1; fi
+
+  local d name numprefix match=""
+  for d in "$base"/*/; do
+    [ -d "$d" ] || continue
+    name="$(basename "$d")"; numprefix="${name%%-*}"
+    if [ "$name" = "$sel" ] || [ "$numprefix" = "$sel" ]; then match="$name"; break; fi
+  done
+  if [ -z "$match" ]; then err "No challenge '$sel' in track '$track' (see ./onboard list $track)"; return 1; fi
+
+  CH_TRACK="$track"; CH_SLUG="$match"; CH_ID="$track/$match"
+  CH_DIR="$base/$match"; CH_SANDBOX="$REPO_ROOT/sandbox/$track/$match"
+}
+
+# ----- commands -----------------------------------------------------------
+cmd_list() {
+  local only="${1:-}"
+  local tdir track cdir name status_mark
+  printf '%sStepChange onboarding — challenges%s  %s(user: %s)%s\n' \
+    "$BOLD" "$RESET" "$DIM" "$USER_SLUG" "$RESET"
+  for tdir in "$REPO_ROOT"/tracks/*/; do
+    track="$(basename "$tdir")"
+    [ "$track" = "_TEMPLATE" ] && continue
+    [ -d "$tdir/challenges" ] || continue
+    [ -n "$only" ] && [ "$only" != "$track" ] && continue
+    printf '\n%s%s%s\n' "$CYAN$BOLD" "$track" "$RESET"
+    for cdir in "$tdir"challenges/*/; do
+      [ -d "$cdir" ] || continue
+      name="$(basename "$cdir")"
+      if progress_is_done "$track/$name" "$USER_SLUG"; then
+        status_mark="${GREEN}✓${RESET}"
+      else
+        status_mark="${DIM}○${RESET}"
+      fi
+      printf '  %s %s\n' "$status_mark" "$name"
+    done
+  done
+  printf '\n%sStart one:%s ./onboard start git/01\n' "$DIM" "$RESET"
+}
+
+cmd_start() {
+  [ $# -ge 1 ] || { err "usage: ./onboard start <track>/<NN>"; return 1; }
+  resolve_challenge "$1" || return 1
+  [ -f "$CH_DIR/setup.sh" ] || { err "challenge has no setup.sh"; return 1; }
+
+  mkdir -p "$(dirname "$CH_SANDBOX")"
+  SANDBOX_DIR="$CH_SANDBOX" REPO_ROOT="$REPO_ROOT" bash "$CH_DIR/setup.sh" || {
+    err "setup failed for $CH_ID"; return 1; }
+
+  printf '\n%s%s%s\n' "$BOLD" "$CH_ID" "$RESET"
+  if [ -f "$CH_DIR/README.md" ]; then
+    printf '%s\n' "$DIM------------------------------------------------------------$RESET"
+    cat "$CH_DIR/README.md"
+    printf '%s\n' "$DIM------------------------------------------------------------$RESET"
+  fi
+  printf '\n%sYour practice repo:%s %s\n' "$BOLD" "$RESET" "$CH_SANDBOX"
+  printf '%sGo there:%s   cd %s\n' "$DIM" "$RESET" "$CH_SANDBOX"
+  printf '%sCheck work:%s ./onboard validate %s\n' "$DIM" "$RESET" "$CH_ID"
+}
+
+cmd_reset() {
+  [ $# -ge 1 ] || { err "usage: ./onboard reset <track>/<NN>"; return 1; }
+  resolve_challenge "$1" || return 1
+  cmd_start "$1"
+  warn "Sandbox reset to its starting state."
+}
+
+cmd_validate() {
+  [ $# -ge 1 ] || { err "usage: ./onboard validate <track>/<NN>"; return 1; }
+  resolve_challenge "$1" || return 1
+  if [ ! -d "$CH_SANDBOX" ]; then
+    err "No sandbox yet. Run: ./onboard start $CH_ID"; return 1
+  fi
+  [ -f "$CH_DIR/validate.sh" ] || { err "challenge has no validate.sh"; return 1; }
+
+  printf '%sValidating %s%s\n' "$BOLD" "$CH_ID" "$RESET"
+  SANDBOX_DIR="$CH_SANDBOX" REPO_ROOT="$REPO_ROOT" bash "$CH_DIR/validate.sh"
+  local rc=$?
+
+  if [ "$rc" -eq 0 ]; then
+    local sha; sha="$(git -C "$CH_SANDBOX" rev-parse --short HEAD 2>/dev/null || echo '-')"
+    progress_mark "$CH_ID" "$sha" "$USER_SLUG"
+    ok "Recorded in progress/$USER_SLUG.json. Run ${BOLD}./onboard share${RESET} to publish it."
+  fi
+  return "$rc"
+}
+
+cmd_progress() {
+  local file; file="$(progress_file "$USER_SLUG")"
+  local total=0 done track
+  while IFS= read -r track; do total=$((total + $(track_total "$track"))); done < <(track_names)
+  done="$(progress_count "$USER_SLUG")"
+  printf '%s%s%s — %s%s/%s%s challenges complete\n' \
+    "$BOLD" "$USER_SLUG" "$RESET" "$GREEN" "$done" "$total" "$RESET"
+  if [ -f "$file" ]; then
+    printf '%s%s%s\n' "$DIM" "$file" "$RESET"
+    if command -v jq >/dev/null 2>&1; then jq . "$file"; else cat "$file"; fi
+  else
+    printf '%sNothing recorded yet. Try: ./onboard start git/01%s\n' "$DIM" "$RESET"
+  fi
+}
+
+cmd_share() {
+  need_remote || return 1
+  local branch="progress/$USER_SLUG"
+  local file; file="$(progress_file "$USER_SLUG")"
+
+  # Build on whatever is already shared, so progress from another machine (or
+  # before a fresh clone) is kept rather than overwritten.
+  local parent="" rc added
+  repo_git ls-remote --exit-code --heads "$REMOTE" "refs/heads/$branch" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" -eq 0 ]; then
+    repo_git fetch -q "$REMOTE" "+refs/heads/$branch:refs/remotes/$REMOTE/$branch" || {
+      err "Couldn't fetch $REMOTE/$branch."; return 1; }
+    parent="$(repo_git rev-parse --verify -q "refs/remotes/$REMOTE/$branch^{commit}")"
+    added="$(repo_git show "$parent:progress.json" 2>/dev/null | progress_merge "$USER_SLUG")"
+    [ "${added:-0}" -gt 0 ] && info "Pulled in $added completion(s) you'd already shared."
+  elif [ "$rc" -ne 2 ]; then   # 2 = reachable, branch just doesn't exist yet
+    err "Couldn't reach '$REMOTE'. Check your network / access and try again."; return 1
+  fi
+
+  [ -f "$file" ] || { err "Nothing to share yet. Pass a challenge first."; return 1; }
+
+  # Commit the file straight onto the branch with plumbing, so your checkout,
+  # current branch and working tree are never touched.
+  local blob tree commit n
+  blob="$(repo_git hash-object -w "$file")" || return 1
+  tree="$(printf '100644 blob %s\tprogress.json\n' "$blob" | repo_git mktree)" || return 1
+  if [ -n "$parent" ] && [ "$(repo_git rev-parse "$parent^{tree}")" = "$tree" ]; then
+    ok "Already up to date on $REMOTE/$branch."; return 0
+  fi
+  n="$(progress_count "$USER_SLUG")"
+  local -a parent_args=()
+  [ -n "$parent" ] && parent_args=(-p "$parent")
+  commit="$(repo_git commit-tree "$tree" ${parent_args[@]+"${parent_args[@]}"} \
+            -m "$USER_SLUG: $n challenge(s) complete")" || {
+    err "Couldn't create the commit. Is git user.name / user.email set?"; return 1; }
+
+  repo_git push -q "$REMOTE" "$commit:refs/heads/$branch" || {
+    err "Push to $REMOTE/$branch failed. Do you have push access?"; return 1; }
+  repo_git update-ref "refs/remotes/$REMOTE/$branch" "$commit"
+  ok "Shared $n completed challenge(s) to ${BOLD}$REMOTE/$branch${RESET}."
+}
+
+# team_json <person> — that person's shared progress.json
+team_json() { repo_git show "refs/remotes/$REMOTE/progress/$1:progress.json" 2>/dev/null; }
+
+cmd_team() {
+  local csv=0 who="" a
+  for a in "$@"; do
+    case "$a" in
+      --csv) csv=1 ;;
+      -*) err "usage: ./onboard team [person] [--csv]"; return 1 ;;
+      *) who="$a" ;;
+    esac
+  done
+  need_remote || return 1
+  repo_git fetch -q --prune "$REMOTE" \
+    "+refs/heads/progress/*:refs/remotes/$REMOTE/progress/*" || {
+    err "Couldn't fetch progress branches from '$REMOTE'."; return 1; }
+
+  local -a people=() tracks=()
+  local line
+  while IFS= read -r line; do [ -n "$line" ] && people+=("$line"); done < <(
+    repo_git for-each-ref --format='%(refname:strip=4)' "refs/remotes/$REMOTE/progress/")
+  while IFS= read -r line; do tracks+=("$line"); done < <(track_names)
+
+  if [ ${#people[@]} -eq 0 ]; then
+    info "Nobody has shared progress yet (no progress/* branches on $REMOTE)."; return 0
+  fi
+
+  local json track done total last person
+  if [ -n "$who" ]; then
+    json="$(team_json "$who")" || { err "No shared progress for '$who'. Try: ./onboard team"; return 1; }
+    printf '%s%s%s\n' "$BOLD" "$who" "$RESET"
+    for track in "${tracks[@]}"; do
+      done="$(grep -c "\"id\": \"$track/" <<<"$json")"
+      printf '\n%s%s%s  %s/%s\n' "$CYAN$BOLD" "$track" "$RESET" "$done" "$(track_total "$track")"
+      grep -oE "\"id\": \"$track/[^\"]*\", \"completed_at\": \"[^\"]*\"" <<<"$json" |
+        sed -E "s#\"id\": \"$track/([^\"]*)\", \"completed_at\": \"([^T]*)T.*#  ${GREEN}✓${RESET} \\1  ${DIM}\\2${RESET}#"
+    done
+    return 0
+  fi
+
+  # One row per person: done per track, overall, and date of latest completion.
+  # A track's column fits its name and "total/total".
+  col_w() { local t="$1" n; n="$(track_total "$1")/$(track_total "$1")"
+            [ ${#n} -gt ${#t} ] && echo ${#n} || echo ${#t}; }
+  local grand=0 w=6 cell
+  for track in "${tracks[@]}"; do grand=$((grand + $(track_total "$track"))); done
+  for person in "${people[@]}"; do [ ${#person} -gt $w ] && w=${#person}; done
+
+  if [ "$csv" -eq 1 ]; then
+    printf 'person'; printf ',%s' "${tracks[@]}"; printf ',total,last_completed\n'
+  else
+    printf "$BOLD%-${w}s" "person"
+    for track in "${tracks[@]}"; do printf "  %-$(col_w "$track")s" "$track"; done
+    printf '  %-7s  %s%s\n' "total" "last done" "$RESET"
+  fi
+
+  for person in "${people[@]}"; do
+    json="$(team_json "$person")"
+    done="$(grep -c '"id":' <<<"$json")"
+    last="$(grep -oE '"completed_at": "[^"]*"' <<<"$json" | cut -d'"' -f4 | sort | tail -n1)"
+    last="${last%%T*}"
+    if [ "$csv" -eq 1 ]; then
+      printf '%s' "$person"
+      for track in "${tracks[@]}"; do printf ',%s' "$(grep -c "\"id\": \"$track/" <<<"$json")"; done
+      printf ',%s,%s\n' "$done" "$last"
+      continue
+    fi
+    printf "%-${w}s" "$person"
+    for track in "${tracks[@]}"; do
+      local td tt; td="$(grep -c "\"id\": \"$track/" <<<"$json")"; tt="$(track_total "$track")"
+      printf -v cell "%-$(col_w "$track")s" "$td/$tt"
+      if [ "$td" -eq "$tt" ]; then printf '  %s%s%s' "$GREEN" "$cell" "$RESET"
+      elif [ "$td" -eq 0 ]; then printf '  %s%s%s' "$DIM" "$cell" "$RESET"
+      else printf '  %s' "$cell"; fi
+    done
+    printf '  %-7s  %s\n' "$done/$grand" "${last:--}"
+  done
+  [ "$csv" -eq 1 ] || printf '\n%sDetail for one person: ./onboard team <person>%s\n' "$DIM" "$RESET"
+}
+
+cmd_help() {
+  cat <<EOF
+${BOLD}onboard${RESET} — self-validating skills challenges
+
+  ${BOLD}list${RESET} [track]            list tracks + challenges with your status
+  ${BOLD}start${RESET} <track>/<NN>      scaffold an isolated practice repo
+  ${BOLD}validate${RESET} <track>/<NN>   check your work; records completion on pass
+  ${BOLD}reset${RESET} <track>/<NN>      start a challenge over
+  ${BOLD}progress${RESET}                your completion summary
+  ${BOLD}share${RESET}                   publish your progress to the progress/<you> branch
+  ${BOLD}team${RESET} [person] [--csv]   everyone's shared progress (or one person's detail)
+  ${BOLD}help${RESET}
+
+Examples:
+  ./onboard list
+  ./onboard start git/06
+  cd sandbox/git/06-reflog-recovery   # do the work here
+  ./onboard validate git/06
+  ./onboard share
+EOF
+}
+
+main() {
+  local cmd="${1:-help}"; shift || true
+  case "$cmd" in
+    list)     cmd_list "$@" ;;
+    start)    cmd_start "$@" ;;
+    validate) cmd_validate "$@" ;;
+    reset)    cmd_reset "$@" ;;
+    progress) cmd_progress "$@" ;;
+    share)    cmd_share "$@" ;;
+    team)     cmd_team "$@" ;;
+    help|-h|--help) cmd_help ;;
+    *) err "Unknown command: $cmd"; cmd_help; exit 1 ;;
+  esac
+}
+main "$@"

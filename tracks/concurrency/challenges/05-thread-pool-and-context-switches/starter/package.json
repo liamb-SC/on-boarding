@@ -1,0 +1,11 @@
+{
+  "name": "prime-pool",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node main.js",
+    "observe": "node observe.js",
+    "uv-pool": "node uv-pool.js"
+  }
+}

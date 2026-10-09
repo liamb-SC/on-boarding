@@ -1,0 +1,13 @@
+{
+  "name": "feed-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "demo": "node demo.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

@@ -1,0 +1,2 @@
+-- Names (and skus) of red shirts, ordered by name then sku.
+-- Columns: sku, name

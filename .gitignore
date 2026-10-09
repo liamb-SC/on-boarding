@@ -1,0 +1,10 @@
+# Each learner's isolated practice repos — never committed.
+/sandbox/
+
+# Local progress records. Shared via `./onboard share` to each person's own
+# progress/<user> branch, never committed to main.
+/progress/*.json
+
+# Local editor / OS noise
+.DS_Store
+*.swp

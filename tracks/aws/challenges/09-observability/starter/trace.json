@@ -1,0 +1,223 @@
+{
+  "Traces": [
+    {
+      "Id": "1-68e77800-7b2e9c4d1a6f8e3b5c0d2a19",
+      "Duration": 2.25,
+      "LimitExceeded": false,
+      "Segments": [
+        {
+          "Id": "4f1a2b3c4d5e6f70",
+          "Document": {
+            "id": "4f1a2b3c4d5e6f70",
+            "name": "orders-api/dev",
+            "trace_id": "1-68e77800-7b2e9c4d1a6f8e3b5c0d2a19",
+            "start_time": 1760000000,
+            "end_time": 1760000002.25,
+            "origin": "AWS::ApiGateway::Stage",
+            "fault": true,
+            "http": {
+              "request": {
+                "method": "POST",
+                "url": "https://abc123.execute-api.eu-west-2.amazonaws.com/dev/orders/o-881/checkout"
+              },
+              "response": {
+                "status": 502
+              }
+            },
+            "aws": {
+              "api_id": "abc123",
+              "resource_path": "/orders/{id}/checkout",
+              "stage": "dev",
+              "account_id": "111122223333"
+            },
+            "subsegments": [
+              {
+                "id": "5a6b7c8d9e0f1a2b",
+                "name": "Lambda",
+                "namespace": "aws",
+                "start_time": 1760000000.008,
+                "end_time": 1760000002.244,
+                "fault": true,
+                "http": {
+                  "response": {
+                    "status": 200
+                  }
+                },
+                "aws": {
+                  "operation": "Invoke",
+                  "function_name": "checkout-fn",
+                  "resource_names": [
+                    "checkout-fn"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "Id": "6c7d8e9f0a1b2c3d",
+          "Document": {
+            "id": "6c7d8e9f0a1b2c3d",
+            "name": "checkout-fn",
+            "trace_id": "1-68e77800-7b2e9c4d1a6f8e3b5c0d2a19",
+            "parent_id": "5a6b7c8d9e0f1a2b",
+            "start_time": 1760000000.012,
+            "end_time": 1760000002.24,
+            "origin": "AWS::Lambda",
+            "fault": true,
+            "http": {
+              "response": {
+                "status": 200
+              }
+            },
+            "aws": {
+              "request_id": "e3b1c5d2-9f0a-4c7e-8b6d-2a1f0e9d8c7b"
+            }
+          }
+        },
+        {
+          "Id": "7d8e9f0a1b2c3d4e",
+          "Document": {
+            "id": "7d8e9f0a1b2c3d4e",
+            "name": "checkout-fn",
+            "trace_id": "1-68e77800-7b2e9c4d1a6f8e3b5c0d2a19",
+            "parent_id": "6c7d8e9f0a1b2c3d",
+            "start_time": 1760000000.02,
+            "end_time": 1760000002.236,
+            "origin": "AWS::Lambda::Function",
+            "fault": true,
+            "annotations": {
+              "customerTier": "gold",
+              "orderId": "o-881"
+            },
+            "metadata": {
+              "default": {
+                "cartSize": 3,
+                "currency": "GBP"
+              }
+            },
+            "subsegments": [
+              {
+                "id": "8e9f0a1b2c3d4e5f",
+                "name": "Initialization",
+                "start_time": 1760000000.02,
+                "end_time": 1760000000.4,
+                "aws": {
+                  "function_arn": "arn:aws:lambda:eu-west-2:111122223333:function:checkout-fn"
+                }
+              },
+              {
+                "id": "9f0a1b2c3d4e5f60",
+                "name": "Invocation",
+                "start_time": 1760000000.402,
+                "end_time": 1760000002.23,
+                "fault": true,
+                "cause": {
+                  "exceptions": [
+                    {
+                      "id": "0a1b2c3d4e5f6071",
+                      "message": "Payment provider returned 502",
+                      "type": "PaymentError",
+                      "remote": false
+                    }
+                  ]
+                },
+                "subsegments": [
+                  {
+                    "id": "a1b2c3d4e5f60718",
+                    "name": "DynamoDB",
+                    "namespace": "aws",
+                    "start_time": 1760000000.41,
+                    "end_time": 1760000000.428,
+                    "http": {
+                      "response": {
+                        "status": 200
+                      }
+                    },
+                    "aws": {
+                      "operation": "GetItem",
+                      "table_name": "orders",
+                      "retries": 0,
+                      "region": "eu-west-2"
+                    }
+                  },
+                  {
+                    "id": "b2c3d4e5f6071829",
+                    "name": "payments.example.com",
+                    "namespace": "remote",
+                    "start_time": 1760000000.431,
+                    "end_time": 1760000001.851,
+                    "fault": true,
+                    "http": {
+                      "request": {
+                        "method": "POST",
+                        "url": "https://payments.example.com/v1/charges"
+                      },
+                      "response": {
+                        "status": 502
+                      }
+                    },
+                    "cause": {
+                      "exceptions": [
+                        {
+                          "id": "c3d4e5f60718293a",
+                          "message": "Bad Gateway",
+                          "type": "HTTPError",
+                          "remote": true
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "d4e5f60718293a4b",
+                    "name": "DynamoDB",
+                    "namespace": "aws",
+                    "start_time": 1760000001.86,
+                    "end_time": 1760000001.893,
+                    "http": {
+                      "response": {
+                        "status": 200
+                      }
+                    },
+                    "aws": {
+                      "operation": "UpdateItem",
+                      "table_name": "orders",
+                      "retries": 0,
+                      "region": "eu-west-2"
+                    },
+                    "annotations": {
+                      "status": "PAYMENT_FAILED"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "Id": "e5f60718293a4b5c",
+          "Document": {
+            "id": "e5f60718293a4b5c",
+            "name": "payments.example.com",
+            "trace_id": "1-68e77800-7b2e9c4d1a6f8e3b5c0d2a19",
+            "parent_id": "b2c3d4e5f6071829",
+            "start_time": 1760000000.431,
+            "end_time": 1760000001.851,
+            "inferred": true,
+            "namespace": "remote",
+            "fault": true,
+            "http": {
+              "request": {
+                "method": "POST",
+                "url": "https://payments.example.com/v1/charges"
+              },
+              "response": {
+                "status": 502
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

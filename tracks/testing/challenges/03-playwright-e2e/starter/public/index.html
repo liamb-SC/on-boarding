@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Todos</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; max-width: 30rem; margin: 2rem auto; }
+    .done label { text-decoration: line-through; color: #888; }
+    nav a[aria-current] { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Todos</h1>
+  <form id="add-form">
+    <label for="new-todo">What needs doing?</label>
+    <input id="new-todo" autocomplete="off">
+    <button type="submit">Add</button>
+  </form>
+  <ul id="todo-list"></ul>
+  <p id="count">0 items left</p>
+  <nav>
+    <a href="#/" data-filter="all" aria-current="page">All</a>
+    <a href="#/active" data-filter="active">Active</a>
+    <a href="#/completed" data-filter="completed">Completed</a>
+  </nav>
+  <script src="app.js"></script>
+</body>
+</html>

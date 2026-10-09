@@ -1,0 +1,7 @@
+{
+  "_instructions": "Answer \"embed\" (put it inside the order document) or \"reference\" (store an id and keep it in its own collection/table).",
+  "order-line-items": "",
+  "customer-full-profile": "",
+  "product-reviews": "",
+  "shipping-address-at-time-of-order": ""
+}

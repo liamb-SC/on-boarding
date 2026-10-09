@@ -1,0 +1,8 @@
+{
+  "_instructions": "Fill in each answer as a string.",
+  "consumers-that-process-one-queue-message": "How many of 3 competing consumers on ONE queue process a given message? (a number)",
+  "queues-that-get-one-topic-message": "How many of 3 queues subscribed to ONE SNS topic receive a copy? (a number)",
+  "resize-each-upload-once-across-workers": "\"queue\" or \"pubsub\"",
+  "billing-shipping-analytics-all-react": "\"queue\" or \"pubsub\"",
+  "absorb-a-burst-for-a-slow-consumer": "\"queue\" or \"pubsub\""
+}

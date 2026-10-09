@@ -1,0 +1,15 @@
+{
+  "name": "library-graphql",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "query": "node run.js"
+  },
+  "dependencies": {
+    "@graphql-tools/schema": "^10.0.0",
+    "graphql": "^16.9.0",
+    "graphql-http": "^1.22.0"
+  }
+}
