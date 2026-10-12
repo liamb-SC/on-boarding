@@ -8,6 +8,7 @@ often (Day.js for dates, Zod for validation, Axios for HTTP).
 Node.js 20+ and network access to the npm registry. Challenges 01, 02 and 06
 install `typescript`, 05 installs `dayjs`, 06 installs `zod`, and 07 installs
 `axios`. Challenge 07 runs a small local API server, with no internet needed.
+Challenge 08 needs no packages.
 
 ## Learning objectives
 By the end you can:
@@ -19,6 +20,7 @@ By the end you can:
 - Parse, format, convert and diff dates with Day.js without local time zone bugs.
 - Validate untrusted input with Zod and get the TypeScript type from the schema.
 - Build an Axios instance with interceptors and timeouts, and classify its errors.
+- Wrap callback APIs in `new Promise`, chain `.then` correctly, and build timeout, retry and first-success helpers.
 
 ## Challenges (do them in order)
 | # | Challenge | Core concepts |
@@ -30,5 +32,6 @@ By the end you can:
 | 05 | dayjs | strict parsing, formatting, UTC, `.tz()`, DST, `.diff()` |
 | 06 | zod | schemas, `safeParse`, defaults, `z.infer` |
 | 07 | axios | `axios.create`, interceptors, timeouts, error handling |
+| 08 | promises | `new Promise`, promisifying callbacks, `.then` chaining, `race` vs `any`, timeouts, retry |
 
 Start with: `./onboard start javascript/01`
