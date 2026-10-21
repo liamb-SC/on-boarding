@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Client-side guard: refuse any push that updates or deletes main/master.
+# A convenience, not security: the real protection is the branch ruleset on
+# GitHub (see docs/CONTRIBUTING.md). Enabled by .devcontainer/on-create.sh via
+# `git config core.hooksPath .githooks`.
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/master)
+      echo "✗ Pushing to ${remote_ref#refs/heads/} is blocked in this repo." >&2
+      echo "  Use ./onboard share (progress) or ./onboard push-work (your solutions)." >&2
+      exit 1 ;;
+  esac
+done
+exit 0

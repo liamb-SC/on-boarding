@@ -9,6 +9,9 @@ cd "$(dirname "$0")/.." || exit 1
 step() { printf '\n▶ %s\n' "$*"; }
 warn() { printf '! %s (the challenge will retry this itself)\n' "$*" >&2; }
 
+# Block accidental pushes to main (see .githooks/pre-push).
+git config core.hooksPath .githooks
+
 # kind + kubectl, using the repo's own pinned versions and cache directory.
 step "kind and kubectl"
 # shellcheck source=../tracks/infrastructure/docker.sh

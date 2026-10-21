@@ -66,6 +66,9 @@ cd -               # back to the onboarding repo
 
 # 7. Publish your progress so the team can see it
 ./onboard share
+
+# 8. Save your actual solutions to your own branches on the remote
+./onboard push-work
 ```
 
 ## How it works
@@ -75,6 +78,7 @@ cd -               # back to the onboarding repo
 | `./onboard` | The CLI: `list`, `start`, `validate`, `reset`, `progress`, `share`, `team`, `help`. |
 | `sandbox/` | Your **private, git-ignored** practice repos. Each challenge scaffolds a throwaway git repo here, so many people can rebase/merge/force-reset freely with zero collisions. |
 | `tracks/<track>/challenges/<NN>/` | Each challenge = `README.md` (the task) + `setup.sh` (builds the starting state) + `validate.sh` (inspects real git state, pass/fail). |
+| `work/<you>/...` branches | What `./onboard push-work` publishes: each practice repo's branches, pushed to `work/<you>/<track>/<challenge>/<branch>` on `origin`. Force-updated, so it is safe after a rebase or reset. It can only write under `work/`. |
 | `progress/<you>.json` | Your local record of what you've completed (git-ignored). `./onboard share` publishes it to your own `progress/<you>` branch. |
 
 Your practice never lands in this shared repo, and neither does your progress

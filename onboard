@@ -7,6 +7,7 @@
 #   ./onboard reset <track>/<NN>    start a challenge over
 #   ./onboard progress              your completion summary
 #   ./onboard share                 publish your progress to progress/<you>
+#   ./onboard push-work [<track>/<NN>...]  push your practice repos to work/<you>/...
 #   ./onboard team [person] [--csv] everyone's shared progress
 #   ./onboard help
 #
@@ -226,6 +227,58 @@ cmd_share() {
   ok "Shared $n completed challenge(s) to ${BOLD}$REMOTE/$branch${RESET}."
 }
 
+# ----- push-work ----------------------------------------------------------
+# Practice repos are throwaway and have no remote. push-work publishes their
+# branches to the team remote under work/<you>/<track>/<challenge>/<branch>, so
+# a learner's actual solutions are kept and reviewable. It can only ever write
+# inside work/<you>/ (never main), and force-updates because learners rebase
+# and reset. Nothing in the onboarding checkout is touched.
+cmd_push_work() {
+  need_remote || return 1
+  local -a ids=()
+  local a d
+  if [ $# -ge 1 ]; then
+    for a in "$@"; do resolve_challenge "$a" || return 1; ids+=("$CH_ID"); done
+  else
+    for d in "$REPO_ROOT"/sandbox/*/*/; do
+      d="${d%/}"
+      [ -d "$d/.git" ] && ids+=("${d#"$REPO_ROOT"/sandbox/}")
+    done
+  fi
+  if [ ${#ids[@]} -eq 0 ]; then
+    info "No practice repos yet. Start one: ./onboard start git/01"; return 0
+  fi
+
+  local url id prefix pushed=0 failed=0
+  url="$(repo_git remote get-url --push "$REMOTE")" || return 1
+  for id in "${ids[@]}"; do
+    resolve_challenge "$id" || return 1
+    if [ ! -d "$CH_SANDBOX/.git" ]; then
+      warn "$CH_ID: no sandbox yet (./onboard start $CH_ID), skipping."; continue
+    fi
+    if ! git -C "$CH_SANDBOX" rev-parse --verify -q HEAD >/dev/null; then
+      warn "$CH_ID: no commits yet, skipping."; continue
+    fi
+    prefix="work/$USER_SLUG/$CH_ID"
+    case "$prefix" in
+      work/?*/?*) ;;
+      *) err "Refusing to push outside work/: $prefix"; return 1 ;;
+    esac
+    local -a refspecs=("+refs/heads/*:refs/heads/$prefix/*")
+    # A detached HEAD (mid-rebase, bisect...) isn't a branch; keep it as "tip".
+    git -C "$CH_SANDBOX" symbolic-ref -q HEAD >/dev/null ||
+      refspecs+=("+HEAD:refs/heads/$prefix/tip")
+    if git -C "$CH_SANDBOX" push -q "$url" "${refspecs[@]}"; then
+      ok "$CH_ID -> ${BOLD}$REMOTE/$prefix/*${RESET}"; pushed=$((pushed + 1))
+    else
+      err "$CH_ID: push failed. Do you have push access to $REMOTE?"; failed=$((failed + 1))
+    fi
+  done
+  [ "$failed" -eq 0 ] || return 1
+  [ "$pushed" -gt 0 ] || info "Nothing was pushed."
+  return 0
+}
+
 # team_json <person> — that person's shared progress.json
 team_json() { repo_git show "refs/remotes/$REMOTE/progress/$1:progress.json" 2>/dev/null; }
 
@@ -316,6 +369,7 @@ ${BOLD}onboard${RESET} — self-validating skills challenges
   ${BOLD}reset${RESET} <track>/<NN>      start a challenge over
   ${BOLD}progress${RESET}                your completion summary
   ${BOLD}share${RESET}                   publish your progress to the progress/<you> branch
+  ${BOLD}push-work${RESET} [<track>/<NN>...]  push your practice repos' branches to work/<you>/...
   ${BOLD}team${RESET} [person] [--csv]   everyone's shared progress (or one person's detail)
   ${BOLD}help${RESET}
 
@@ -325,6 +379,7 @@ Examples:
   cd sandbox/git/06-reflog-recovery   # do the work here
   ./onboard validate git/06
   ./onboard share
+  ./onboard push-work git/06          # save your solution to work/<you>/git/06-.../
 EOF
 }
 
@@ -337,6 +392,7 @@ main() {
     reset)    cmd_reset "$@" ;;
     progress) cmd_progress "$@" ;;
     share)    cmd_share "$@" ;;
+    push-work) cmd_push_work "$@" ;;
     team)     cmd_team "$@" ;;
     help|-h|--help) cmd_help ;;
     *) err "Unknown command: $cmd"; cmd_help; exit 1 ;;

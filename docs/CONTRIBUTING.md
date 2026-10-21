@@ -80,3 +80,21 @@ source, AI harnessing — as well as Git.
 Stick to `git` + coreutils + bash so challenges run everywhere. If a track
 genuinely needs a tool (e.g. `docker`), have `setup.sh` check for it and print a
 clear skip message rather than failing cryptically.
+
+## Protecting `main` (repo admins, one-time setup)
+
+Learners need write access so `./onboard share` and `./onboard push-work` can
+create `progress/<you>` and `work/<you>/...` branches. Nothing in the CLI
+pushes to `main`, and `.githooks/pre-push` (enabled by the dev container) blocks
+it client-side, but only GitHub can enforce it. Add a ruleset:
+
+Settings -> Rules -> Rulesets -> New branch ruleset
+
+- Enforcement: **Active**. Target: **Default branch**.
+- Bypass list: only the maintainers who merge new challenges.
+- Enable **Restrict deletions**, **Block force pushes** and
+  **Require a pull request before merging** (this is what stops direct pushes).
+- Do *not* target `work/**` or `progress/**`; learners force-push those.
+
+Verify with a non-admin account: `git push origin HEAD:main` must be rejected,
+while `./onboard push-work` and `./onboard share` succeed.
