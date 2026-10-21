@@ -1,0 +1,39 @@
+// Dev container for GitHub Codespaces (and VS Code "Reopen in Container").
+// Everything every track needs, with nothing to install locally: git, Node 22,
+// pnpm/yarn via corepack, Docker (in-container daemon), kind/kubectl, httpie,
+// jq, zsh and Playwright's Chromium. Enable a Codespaces prebuild on main so
+// the slow parts of on-create.sh run once, not once per learner.
+{
+  "name": "StepChange onboarding",
+  "build": { "dockerfile": "Dockerfile" },
+
+  // Docker-in-Docker rather than the host socket: published ports
+  // (localhost:4566, :6379, :8080) and bind mounts (./tf mounts $PWD) only
+  // behave like a laptop when the daemon runs inside this container.
+  // kind needs it too.
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  // The smallest Codespaces machine. Git and most tracks need far less; kind
+  // and LocalStack are slower here but work (close other containers first).
+  "hostRequirements": { "cpus": 2, "memory": "8gb" },
+
+  "remoteUser": "node",
+  // Where tracks/infrastructure/docker.sh caches kind and kubectl.
+  "remoteEnv": { "PATH": "/home/node/.cache/onboard/bin:${containerEnv:PATH}" },
+
+  "onCreateCommand": "bash .devcontainer/on-create.sh",
+
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] },
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ],
+      "settings": { "files.eol": "\n" }
+    }
+  }
+}

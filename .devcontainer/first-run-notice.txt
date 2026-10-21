@@ -1,0 +1,9 @@
+👋 Welcome to StepChange onboarding. Everything is installed already.
+
+   ./onboard list            see the tracks and challenges
+   ./onboard start git/01    start your first challenge
+   ./onboard help            all commands
+
+In Codespaces git already knows who you are, so skip step 2 of the
+README quick start.
+

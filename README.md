@@ -12,6 +12,32 @@ then pick the tracks that match your role. Every challenge is small: most take
 
 ## Quick start
 
+The easiest way in is the **dev container**: git, Node, Docker and every other
+tool the tracks need come preinstalled, so there is nothing to set up on your
+machine.
+
+### Option A — dev container (recommended)
+
+You need [VS Code](https://code.visualstudio.com/) with the **Dev Containers**
+extension, plus [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+(or any Docker engine). No local git required for the container itself.
+
+1. In VS Code, run **Dev Containers: Clone Repository in Container Volume…**
+   and paste this repo's URL. (Already cloned? Open the folder and choose
+   **Dev Containers: Reopen in Container**.)
+2. Wait for the first build; it pulls images and can take several minutes.
+3. In the container terminal, carry on from step 3 below. VS Code passes your
+   host git identity into the container; if `git config user.name` prints
+   nothing, do step 2 below.
+
+Prefer the browser? Click **Code → Codespaces → Create codespace** on GitHub.
+Git already knows who you are there, so skip step 2.
+
+### Option B — local install
+
+You need git and bash. Node.js 20+ is needed for some tracks and Docker for
+others.
+
 ```bash
 # 1. Clone and enter the repo
 git clone <this-repo> && cd onboarding-repo
@@ -19,7 +45,11 @@ git clone <this-repo> && cd onboarding-repo
 # 2. Make sure git knows who you are (used to key your progress)
 git config user.name "Your Name"
 git config user.email "you@stepchange.example"
+```
 
+### Then, in either setup
+
+```bash
 # 3. See what's available
 ./onboard list
 

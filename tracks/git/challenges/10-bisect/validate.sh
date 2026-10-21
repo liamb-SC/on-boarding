@@ -2,7 +2,7 @@
 source "$REPO_ROOT/lib/common.sh"
 
 expected="$(cat "$SANDBOX_DIR/.git/note_bad_sha" 2>/dev/null)"
-answer_raw="$(tr -d '[:space:]' < "$SANDBOX_DIR/bisect_answer.txt" 2>/dev/null)"
+answer_raw="$({ tr -d '[:space:]' < "$SANDBOX_DIR/bisect_answer.txt"; } 2>/dev/null)"
 answer_full="$(g rev-parse "$answer_raw" 2>/dev/null)"
 
 if [ -z "$answer_raw" ]; then
