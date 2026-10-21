@@ -2,6 +2,7 @@
   "user": "liam-burgoyne",
   "completed": [
     {"id": "git/01-first-commit", "completed_at": "2026-10-21T19:01:12Z", "sha": "4b44450"},
-    {"id": "git/02-branch-and-merge", "completed_at": "2026-10-21T19:15:30Z", "sha": "8034f47"}
+    {"id": "git/02-branch-and-merge", "completed_at": "2026-10-21T19:15:30Z", "sha": "8034f47"},
+    {"id": "git/03-merge-conflict", "completed_at": "2026-10-21T19:34:37Z", "sha": "ed1d4d1"}
   ]
 }
