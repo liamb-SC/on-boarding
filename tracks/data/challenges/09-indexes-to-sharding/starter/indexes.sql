@@ -1,2 +1,0 @@
--- Part 1: add the indexes the two queries in seed.js need (at most 2).
--- e.g. CREATE INDEX idx_name ON orders (col_a, col_b);

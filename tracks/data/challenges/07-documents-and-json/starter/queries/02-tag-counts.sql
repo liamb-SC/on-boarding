@@ -1,2 +1,0 @@
--- How many products carry each tag, most common first (ties: tag A-Z).
--- Columns: tag, n

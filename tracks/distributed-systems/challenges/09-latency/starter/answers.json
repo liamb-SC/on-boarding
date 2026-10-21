@@ -1,5 +1,0 @@
-{
-  "_instructions": "Numbers only.",
-  "percent-of-requests-slow-when-fanning-out-to-10-backends-each-1pct-slow": null,
-  "max-ms-left-for-the-db-call-if-the-request-budget-is-300ms-and-auth-took-120ms-and-50ms-must-be-kept-for-rendering": null
-}

@@ -1,7 +1,0 @@
-{
-  "_instructions": "Numbers only. 1 year = 365 days, 1 month = 30 days. Round to 2 decimal places or better.",
-  "downtime-hours-per-year-at-99.9": null,
-  "downtime-minutes-per-month-at-99.99": null,
-  "availability-percent-of-3-serial-deps-each-99.9": null,
-  "availability-percent-of-2-redundant-instances-each-99": null
-}

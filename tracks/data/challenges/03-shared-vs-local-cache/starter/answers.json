@@ -1,8 +1,0 @@
-{
-  "_instructions": "For each piece of data, answer \"local\" (an in-memory Map per process is fine) or \"shared\" (it needs a shared cache like Redis).",
-  "country-list": "",
-  "feature-flags": "",
-  "user-sessions": "",
-  "product-stock": "",
-  "parsed-config-templates": ""
-}
