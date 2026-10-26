@@ -3,6 +3,9 @@
   "completed": [
     {"id": "git/02-branch-and-merge", "completed_at": "2026-10-23T09:22:11Z", "sha": "30c6398"},
     {"id": "git/03-merge-conflict", "completed_at": "2026-10-23T09:30:44Z", "sha": "9939aeb"},
-    {"id": "git/04-interactive-rebase", "completed_at": "2026-10-26T07:35:42Z", "sha": "a580d05"}
+    {"id": "git/04-interactive-rebase", "completed_at": "2026-10-26T07:35:42Z", "sha": "a580d05"},
+    {"id": "git/05-rebase-onto", "completed_at": "2026-10-26T07:48:59Z", "sha": "a65e966"},
+    {"id": "git/06-reflog-recovery", "completed_at": "2026-10-26T08:00:19Z", "sha": "0f8e3f4"},
+    {"id": "git/07-cherry-pick", "completed_at": "2026-10-26T08:18:02Z", "sha": "5801e1f"}
   ]
 }
