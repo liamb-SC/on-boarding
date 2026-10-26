@@ -2,6 +2,7 @@
   "user": "liam",
   "completed": [
     {"id": "git/02-branch-and-merge", "completed_at": "2026-10-23T09:22:11Z", "sha": "30c6398"},
-    {"id": "git/03-merge-conflict", "completed_at": "2026-10-23T09:30:44Z", "sha": "9939aeb"}
+    {"id": "git/03-merge-conflict", "completed_at": "2026-10-23T09:30:44Z", "sha": "9939aeb"},
+    {"id": "git/04-interactive-rebase", "completed_at": "2026-10-26T07:35:42Z", "sha": "a580d05"}
   ]
 }
